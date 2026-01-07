@@ -528,88 +528,42 @@ export default function ApiProxy() {
 
     const getPythonExample = (modelId: string) => {
         const port = status.running ? status.port : (appConfig?.proxy.port || 8045);
-        // 推荐使用 127.0.0.1 以避免部分环境 IPv6 解析延迟问题
         const baseUrl = `http://127.0.0.1:${port}/v1`;
+        const rawBaseUrl = `http://127.0.0.1:${port}`;
         const apiKey = appConfig?.proxy.api_key || 'YOUR_API_KEY';
 
         // 1. Anthropic Protocol
         if (selectedProtocol === 'anthropic') {
-            return `from anthropic import Anthropic
- 
- client = Anthropic(
-     # 推荐使用 127.0.0.1
-     base_url="${`http://127.0.0.1:${port}`}",
-     api_key="${apiKey}"
- )
- 
- # 注意: Antigravity 支持使用 Anthropic SDK 调用任意模型
- response = client.messages.create(
-     model="${modelId}",
-     max_tokens=1024,
-     messages=[{"role": "user", "content": "Hello"}]
- )
- 
- print(response.content[0].text)`;
+            return t('proxy.example.python_anthropic', {
+                baseUrl: rawBaseUrl,
+                apiKey,
+                modelId
+            });
         }
 
         // 2. Gemini Protocol (Native)
         if (selectedProtocol === 'gemini') {
-            const rawBaseUrl = `http://127.0.0.1:${port}`;
-            return `# 需要安装: pip install google-generativeai
-import google.generativeai as genai
-
-# 使用 Antigravity 代理地址 (推荐 127.0.0.1)
-genai.configure(
-    api_key="${apiKey}",
-    transport='rest',
-    client_options={'api_endpoint': '${rawBaseUrl}'}
-)
-
-model = genai.GenerativeModel('${modelId}')
-response = model.generate_content("Hello")
-print(response.text)`;
+            return t('proxy.example.python_gemini', {
+                rawBaseUrl,
+                apiKey,
+                modelId
+            });
         }
 
         // 3. OpenAI Protocol
         if (modelId.startsWith('gemini-3-pro-image')) {
-            return `from openai import OpenAI
- 
- client = OpenAI(
-     base_url="${baseUrl}",
-     api_key="${apiKey}"
- )
- 
- response = client.chat.completions.create(
-     model="${modelId}",
-     # 方式 1: 使用 size 参数 (推荐)
-     # 支持: "1024x1024" (1:1), "1280x720" (16:9), "720x1280" (9:16), "1216x896" (4:3)
-     extra_body={ "size": "1024x1024" },
-     
-     # 方式 2: 使用模型后缀
-     # 例如: gemini-3-pro-image-16-9, gemini-3-pro-image-4-3
-     # model="gemini-3-pro-image-16-9",
-     messages=[{
-         "role": "user",
-         "content": "Draw a futuristic city"
-     }]
- )
- 
- print(response.choices[0].message.content)`;
+            return t('proxy.example.python_openai_image', {
+                baseUrl,
+                apiKey,
+                modelId
+            });
         }
 
-        return `from openai import OpenAI
- 
- client = OpenAI(
-     base_url="${baseUrl}",
-     api_key="${apiKey}"
- )
- 
- response = client.chat.completions.create(
-     model="${modelId}",
-     messages=[{"role": "user", "content": "Hello"}]
- )
- 
- print(response.choices[0].message.content)`;
+        return t('proxy.example.python_openai', {
+            baseUrl,
+            apiKey,
+            modelId
+        });
     };
 
     // 在 filter 逻辑中，当选择 openai 协议时，允许显示所有模型
@@ -1355,10 +1309,10 @@ print(response.text)`;
                                                 onChange={(e) => handleMappingUpdate('openai', 'gpt-4-series', e.target.value)}
                                             >
                                                 <option value="gemini-3-pro-high">gemini-3-pro-high{t('proxy.router.default_suffix', ' (Default)')}</option>
-                                                <optgroup label="Gemini 3 (推荐)">
-                                                    <option value="gemini-3-pro-high">gemini-3-pro-high (高质量)</option>
-                                                    <option value="gemini-3-pro-low">gemini-3-pro-low (均衡)</option>
-                                                    <option value="gemini-3-flash">gemini-3-flash (快速)</option>
+                                                <optgroup label={t('proxy.router.gemini3_group_label')}>
+                                                    <option value="gemini-3-pro-high">{t('proxy.router.gemini3_option_high')}</option>
+                                                    <option value="gemini-3-pro-low">{t('proxy.router.gemini3_option_low')}</option>
+                                                    <option value="gemini-3-flash">{t('proxy.router.gemini3_option_flash')}</option>
                                                 </optgroup>
                                             </select>
                                             <p className="mt-1 text-[9px] text-indigo-500">{t('proxy.router.gemini3_only_warning')}</p>
@@ -1381,10 +1335,10 @@ print(response.text)`;
                                                 onChange={(e) => handleMappingUpdate('openai', 'gpt-4o-series', e.target.value)}
                                             >
                                                 <option value="gemini-3-flash">gemini-3-flash{t('proxy.router.default_suffix', ' (Default)')}</option>
-                                                <optgroup label="Gemini 3 (推荐)">
-                                                    <option value="gemini-3-flash">gemini-3-flash (快速)</option>
-                                                    <option value="gemini-3-pro-high">gemini-3-pro-high (高质量)</option>
-                                                    <option value="gemini-3-pro-low">gemini-3-pro-low (均衡)</option>
+                                                <optgroup label={t('proxy.router.gemini3_group_label')}>
+                                                    <option value="gemini-3-flash">{t('proxy.router.gemini3_option_flash')}</option>
+                                                    <option value="gemini-3-pro-high">{t('proxy.router.gemini3_option_high')}</option>
+                                                    <option value="gemini-3-pro-low">{t('proxy.router.gemini3_option_low')}</option>
                                                 </optgroup>
                                             </select>
                                             <p className="mt-1 text-[9px] text-emerald-600">{t('proxy.router.gemini3_only_warning')}</p>
@@ -1407,10 +1361,10 @@ print(response.text)`;
                                                 onChange={(e) => handleMappingUpdate('openai', 'gpt-5-series', e.target.value)}
                                             >
                                                 <option value="gemini-3-flash">gemini-3-flash{t('proxy.router.default_suffix', ' (Default)')}</option>
-                                                <optgroup label="Gemini 3 (推荐)">
-                                                    <option value="gemini-3-flash">gemini-3-flash (快速)</option>
-                                                    <option value="gemini-3-pro-high">gemini-3-pro-high (高质量)</option>
-                                                    <option value="gemini-3-pro-low">gemini-3-pro-low (均衡)</option>
+                                                <optgroup label={t('proxy.router.gemini3_group_label')}>
+                                                    <option value="gemini-3-flash">{t('proxy.router.gemini3_option_flash')}</option>
+                                                    <option value="gemini-3-pro-high">{t('proxy.router.gemini3_option_high')}</option>
+                                                    <option value="gemini-3-pro-low">{t('proxy.router.gemini3_option_low')}</option>
                                                 </optgroup>
                                             </select>
                                             <p className="mt-1 text-[9px] text-amber-600">{t('proxy.router.gemini3_only_warning')}</p>
@@ -1432,8 +1386,11 @@ print(response.text)`;
                                             <div className="flex items-center gap-2 flex-1">
                                                 <Sparkles size={14} className="text-blue-500 flex-shrink-0" />
                                                 <p className="text-[11px] text-gray-600 dark:text-gray-400">
-                                                    <span className="font-medium text-blue-600 dark:text-blue-400">💰 省钱提示:</span>
-                                                    {' '}Claude CLI 默认使用 <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-[10px] font-mono">claude-haiku-4-5-20251001</code> 处理后台任务,建议映射到廉价 Flash 模型可节省约 95% 成本
+                                                    <span className="font-medium text-blue-600 dark:text-blue-400">{t('proxy.router.haiku_tip_title')}</span>
+                                                    {' '}
+                                                    {t('proxy.router.haiku_tip_body_before')}{' '}
+                                                    <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-[10px] font-mono">claude-haiku-4-5-20251001</code>{' '}
+                                                    {t('proxy.router.haiku_tip_body_after')}
                                                 </p>
                                             </div>
                                             <button
@@ -1441,7 +1398,7 @@ print(response.text)`;
                                                 className="btn btn-ghost btn-xs gap-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-800 whitespace-nowrap flex-shrink-0"
                                             >
                                                 <Plus size={12} />
-                                                一键优化
+                                                {t('proxy.router.haiku_tip_action')}
                                             </button>
                                         </div>
                                     </div>
@@ -1708,8 +1665,8 @@ print(response.text)`;
                 {/* 各种对话框 */}
                 <ModalDialog
                     isOpen={isResetConfirmOpen}
-                    title={t('proxy.dialog.reset_mapping_title') || '重置映射'}
-                    message={t('proxy.dialog.reset_mapping_msg') || '确定要重置所有模型映射为系统默认吗？'}
+                    title={t('proxy.dialog.reset_mapping_title') || 'Reset Model Mapping'}
+                    message={t('proxy.dialog.reset_mapping_msg') || 'Are you sure you want to reset all model mappings to system defaults?'}
                     type="confirm"
                     isDestructive={true}
                     onConfirm={executeResetMapping}
@@ -1728,8 +1685,8 @@ print(response.text)`;
 
                 <ModalDialog
                     isOpen={isClearBindingsConfirmOpen}
-                    title={t('proxy.dialog.clear_bindings_title') || '清除会话绑定'}
-                    message={t('proxy.dialog.clear_bindings_msg') || '确定要清除所有会话与账号的绑定映射吗？'}
+                    title={t('proxy.dialog.clear_bindings_title') || 'Clear Session Bindings'}
+                    message={t('proxy.dialog.clear_bindings_msg') || 'Are you sure you want to clear all session-account bindings?'}
                     type="confirm"
                     isDestructive={true}
                     onConfirm={executeClearSessionBindings}
